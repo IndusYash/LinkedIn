@@ -1,0 +1,19 @@
+# Environment Variables (Contains private API keys)
+backend/.env
+
+# Local database (Contains local sqlite records)
+backend/curator.db
+
+# Python caches and local virtualenvs
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.pytest_cache/
+.venv/
+venv/
+ENV/
+
+# OS specific files
+.DS_Store
+Thumbs.db

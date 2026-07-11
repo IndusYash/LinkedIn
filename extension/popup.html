@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn Attention Guardian</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --bg-panel: rgba(17, 24, 39, 0.7);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --success: #10b981;
+      --accent-gold: #f59e0b;
+      --red: #f43f5e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      width: 380px;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 18px;
+      overflow-x: hidden;
+    }
+
+    /* Glassmorphism Wrapper */
+    .dashboard {
+      background: var(--bg-panel);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      font-size: 24px;
+    }
+
+    h1 {
+      font-size: 16px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #a5b4fc, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--success);
+      background: rgba(16, 185, 129, 0.1);
+      padding: 4px 10px;
+      border-radius: 9999px;
+    }
+
+    .pulse {
+      width: 6px;
+      height: 6px;
+      background-color: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .stat-value.hidden-count {
+      color: var(--red);
+    }
+
+    .stat-value.highlight-count {
+      color: var(--accent-gold);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom: 2px solid var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Filter Toggles */
+    .filters-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 240px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .filter-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+    }
+
+    .filter-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      max-width: 80%;
+    }
+
+    .filter-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .filter-desc {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Switch Style */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 34px;
+      height: 20px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255,255,255,0.1);
+      transition: .2s;
+      border-radius: 34px;
+      border: 1px solid var(--border);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 14px;
+      width: 14px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(14px);
+    }
+
+    /* Logs view */
+    .logs-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 240px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .log-card {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 11px;
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .log-detector {
+      color: var(--red);
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 9px;
+      background: rgba(244, 63, 94, 0.1);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    .log-explanation {
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.3;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <header>
+      <div class="logo-area">
+        <span class="logo-icon">🛡️</span>
+        <h1>Attention Guardian</h1>
+      </div>
+      <div class="status-indicator">
+        <div class="pulse"></div>
+        <span>Active</span>
+      </div>
+    </header>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-label">Evaluated</span>
+        <span id="stat-total" class="stat-value">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Filtered</span>
+        <span id="stat-filtered" class="stat-value hidden-count">0</span>
+      </div>
+    </div>
+
+    <!-- Curation Queue Status Bar -->
+    <div id="queue-status" style="
+      display: none; 
+      align-items: center; 
+      justify-content: center; 
+      gap: 8px; 
+      background: rgba(99, 102, 241, 0.1); 
+      border: 1px solid rgba(99, 102, 241, 0.3); 
+      padding: 8px; 
+      border-radius: 8px; 
+      margin-top: 12px; 
+      margin-bottom: 2px;
+      font-size: 11px; 
+      font-weight: 600; 
+      color: #a5b4fc;
+    ">
+      <span style="
+        width: 8px; 
+        height: 8px; 
+        background: #6366f1; 
+        border-radius: 50%; 
+        display: inline-block;
+        box-shadow: 0 0 8px #6366f1;
+        animation: pulse-badge 1.5s infinite;
+      "></span>
+      <span id="queue-text">Analyzing feed...</span>
+    </div>
+
+    <style>
+    @keyframes pulse-badge {
+      0% { transform: scale(0.9); opacity: 0.5; }
+      50% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.5; }
+    }
+    </style>
+
+    <div class="tabs">
+      <button id="tab-filters" class="tab-btn active">Filters</button>
+      <button id="tab-logs" class="tab-btn">Recent Blocks</button>
+    </div>
+
+    <!-- Filters Tab -->
+    <div id="content-filters" class="tab-content active">
+      <div class="filters-list">
+        
+        <div class="filter-item">
+          <div class="filter-info">
+            <span class="filter-name">AI Slop Detector</span>
+            <span class="filter-desc">GPT boilerplate & engagement bait.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="chk-ai_slop">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="filter-item">
+          <div class="filter-info">
+            <span class="filter-name">Fake Expert Detector</span>
+            <span class="filter-desc">Superficial tech hot-takes.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="chk-fake_expert">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="filter-item">
+          <div class="filter-info">
+            <span class="filter-name">News Aggregators</span>
+            <span class="filter-desc">Low-effort link sharing ("Thoughts?").</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="chk-news_aggregator">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="filter-item">
+          <div class="filter-info">
+            <span class="filter-name">Sales Pitches</span>
+            <span class="filter-desc">Advertisements & recruitment spam.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="chk-sales_pitch">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="filter-item">
+          <div class="filter-info">
+            <span class="filter-name">Humble Brags</span>
+            <span class="filter-desc">Constant milestone celebrations.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="chk-humble_brag">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="filter-item">
+          <div class="filter-info">
+            <span class="filter-name">Generic Motivation</span>
+            <span class="filter-desc">Motivational platitudes.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="chk-generic_motivation">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="filter-item">
+          <div class="filter-info">
+            <span class="filter-name">Copy-Paste Influencer</span>
+            <span class="filter-desc">Generic identical templates.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="chk-copy_paste_influencer">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Logs Tab -->
+    <div id="content-logs" class="tab-content">
+      <div id="logs-container" class="logs-list">
+        <div class="text-muted" style="text-align: center; font-size: 11px; padding: 20px;">No curation history found.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
