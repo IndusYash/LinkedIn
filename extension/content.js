@@ -210,6 +210,17 @@
     const authorUrn = extractAuthorUrn(postNode);
     const postText = extractPostText(postNode);
 
+    if (isSponsoredPost(postNode)) {
+      safeLog(`[Ad Filter] Automatically blocking sponsored ad by ${authorName}`);
+      applyStealthCuration(postNode, {
+        action: "hide",
+        matched_detector: "sales_pitch",
+        explanation: "Promoted Advertisement",
+        post_urn: `ad:${hashCode(authorName + postText.substring(0, 50))}`
+      }, authorName);
+      return;
+    }
+
     safeLog(`[Curate Trigger] Viewport hit: author="${authorName}", textLength=${postText.length}, textSample="${postText.substring(0, 60)}"`);
 
     // Ignore empty/non-text posts
@@ -481,6 +492,48 @@
       hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
     return Math.abs(hash).toString(16);
+  }
+
+  function isSponsoredPost(postNode) {
+    const subSelectors = [
+      '.update-components-actor__sub-description',
+      '.feed-shared-actor__sub-description',
+      '.update-components-actor__meta',
+      'span.t-12.t-normal.t-black--light',
+      '[class*="sub-description"]',
+      '[class*="actor__meta"]'
+    ];
+
+    for (const selector of subSelectors) {
+      const el = postNode.querySelector(selector);
+      if (el) {
+        const txt = el.textContent || el.innerText || "";
+        if (txt.includes("Sponsored") || txt.includes("Promoted")) {
+          return true;
+        }
+      }
+    }
+
+    // Fallback: Check if the text contains a visually-hidden span with "Sponsored" or "Promoted"
+    const hiddenSpans = postNode.querySelectorAll('.visually-hidden');
+    for (const span of hiddenSpans) {
+      const txt = span.textContent || span.innerText || "";
+      const cleaned = txt.trim().toLowerCase();
+      if (cleaned === "sponsored" || cleaned === "promoted") {
+        return true;
+      }
+    }
+
+    // Check if there is an aria-label or text anywhere in the actor header matching "Promoted" or "Sponsored"
+    const headerNode = postNode.querySelector('.update-components-actor, [class*="actor"]');
+    if (headerNode) {
+      const headerText = headerNode.textContent || headerNode.innerText || "";
+      if (headerText.includes("Sponsored") || headerText.includes("Promoted")) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   init();
